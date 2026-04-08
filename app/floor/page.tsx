@@ -50,7 +50,7 @@ const page = () => {
         <div className=" bg-blue-500/50 col-span-3">02</div>
       </div>
       */}
-      <div className="grid grid-cols-4 bg-blue-400 h-full w-full ">
+      <div className="grid grid-cols-4 h-full w-full ">
         {/* LEFT PANEL */}
 
         <div className="col-span-1 overflow-y-scroll">
@@ -144,7 +144,7 @@ const page = () => {
         {/* RGIHT PANEL */}
         <div className="col-span-3 space-y-6 overflow-scroll">
           {/* <FloorPlan /> */}
-          <FloorTable />
+          <FloorTable floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7" />
 
           {/* <FloorCanvas /> */}
         </div>

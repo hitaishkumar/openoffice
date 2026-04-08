@@ -1,626 +1,13 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 type CellType = string | null;
-const floorMatrix: (string | null)[][] = [
-  // Row 0 — North wall: Lifts + Staircase + WS banks facing north (A, B, C)
-  [
-    "LIFT",
-    "LIFT",
-    "STAIR",
-    "A01",
-    "A02",
-    "A03",
-    "A04",
-    "A05",
-    "A06",
-    null,
-    "A07",
-    "A08",
-    "A09",
-    "A10",
-    "A11",
-    "A12",
-    null,
-    "B01",
-    "B02",
-    "B03",
-    "B04",
-    "B05",
-    "B06",
-    null,
-    "C01",
-    "C02",
-    "C03",
-    "C04",
-    "C05",
-    "C06",
-  ],
 
-  // Row 1 — Second WS row (north-facing), same three blocks
-  [
-    "LIFT",
-    "LIFT",
-    "STAIR",
-    "A13",
-    "A14",
-    "A15",
-    "A16",
-    "A17",
-    "A18",
-    null,
-    "A19",
-    "A20",
-    "A21",
-    "A22",
-    "A23",
-    "A24",
-    null,
-    "B07",
-    "B08",
-    "B09",
-    "B10",
-    "B11",
-    "B12",
-    null,
-    "C07",
-    "C08",
-    "C09",
-    "C10",
-    "C11",
-    "C12",
-  ],
-
-  // Row 2 — 1.7m corridor (north side)
-  [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-  ],
-
-  // Row 3 — Reception + 6S meeting rooms + locker banks (north mid)
-  [
-    "RECEP",
-    "RECEP",
-    "RECEP",
-    "MR6",
-    "MR6",
-    "MR6",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    null,
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "MR6",
-    "MR6",
-    "MR6",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-  ],
-
-  // Row 4 — 4S meeting rooms + locker banks (south face of mid zone)
-  [
-    "RECEP",
-    "RECEP",
-    "RECEP",
-    "MR4",
-    "MR4",
-    "MR4",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    null,
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "MR4",
-    "MR4",
-    "MR4",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-  ],
-
-  // Row 5 — 1.7m corridor (mid)
-  [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-  ],
-
-  // Row 6 — WS banks facing south (A south, B south, C south)
-  [
-    null,
-    null,
-    null,
-    "A25",
-    "A26",
-    "A27",
-    "A28",
-    "A29",
-    "A30",
-    null,
-    "A31",
-    "A32",
-    "A33",
-    "A34",
-    "A35",
-    "A36",
-    null,
-    "B13",
-    "B14",
-    "B15",
-    "B16",
-    "B17",
-    "B18",
-    null,
-    "C13",
-    "C14",
-    "C15",
-    "C16",
-    "C17",
-    "C18",
-  ],
-
-  // Row 7 — Second south-facing WS row
-  [
-    null,
-    null,
-    null,
-    "A37",
-    "A38",
-    "A39",
-    "A40",
-    "A41",
-    "A42",
-    null,
-    "A43",
-    "A44",
-    "A45",
-    "A46",
-    "A47",
-    "A48",
-    null,
-    "B19",
-    "B20",
-    "B21",
-    "B22",
-    "B23",
-    "B24",
-    null,
-    "C19",
-    "C20",
-    "C21",
-    "C22",
-    "C23",
-    "C24",
-  ],
-
-  // Row 8 — Staircase (south) + 1.5m corridor
-  [
-    "STAIR",
-    "STAIR",
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-  ],
-
-  // Row 9 — Collab areas + Pantry + Lobby + Hub + Server room
-  [
-    "STAIR",
-    "STAIR",
-    null,
-    "COLAB",
-    "COLAB",
-    "COLAB",
-    "COLAB",
-    "COLAB",
-    "COLAB",
-    null,
-    "PANTRY",
-    "PANTRY",
-    "PANTRY",
-    "LOBBY",
-    "LOBBY",
-    "LOBBY",
-    "LOBBY",
-    "LOBBY",
-    "HUB",
-    "HUB",
-    "SERVER",
-    "SERVER",
-    null,
-    "COLAB",
-    "COLAB",
-    "COLAB",
-    "COLAB",
-    "COLAB",
-    "COLAB",
-    null,
-  ],
-
-  // Row 10 — Collab + Telephone booths + Lobby secondary
-  [
-    null,
-    null,
-    null,
-    "COLAB",
-    "COLAB",
-    "TELBOOTH",
-    "TELBOOTH",
-    null,
-    null,
-    null,
-    "PANTRY",
-    "PANTRY",
-    "PANTRY",
-    "LOBBY",
-    "LOBBY",
-    "LOBBY",
-    "LOBBY",
-    "LOBBY",
-    "HUB",
-    "HUB",
-    "SERVER",
-    "SERVER",
-    null,
-    "COLAB",
-    "COLAB",
-    "TELBOOTH",
-    "TELBOOTH",
-    null,
-    null,
-    null,
-  ],
-
-  // Row 11 — 1.5m corridor with ducts centre
-  [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    "DUCT",
-    "DUCT",
-    "DUCT",
-    "DUCT",
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-  ],
-
-  // Row 12 — WS block D (north-facing) + Cubicles (east end)
-  [
-    null,
-    null,
-    null,
-    "D01",
-    "D02",
-    "D03",
-    "D04",
-    "D05",
-    "D06",
-    null,
-    "D07",
-    "D08",
-    "D09",
-    "D10",
-    "D11",
-    "D12",
-    null,
-    "D13",
-    "D14",
-    "D15",
-    "D16",
-    "D17",
-    "D18",
-    null,
-    "CUBICLE",
-    "CUBICLE",
-    "CUBICLE",
-    "CUBICLE",
-    "CUBICLE",
-    "CUBICLE",
-  ],
-
-  // Row 13 — WS block D row 2 + Cubicles
-  [
-    null,
-    null,
-    null,
-    "D19",
-    "D20",
-    "D21",
-    "D22",
-    "D23",
-    "D24",
-    null,
-    "D25",
-    "D26",
-    "D27",
-    "D28",
-    "D29",
-    "D30",
-    null,
-    "D31",
-    "D32",
-    "D33",
-    "D34",
-    "D35",
-    "D36",
-    null,
-    "CUBICLE",
-    "CUBICLE",
-    "CUBICLE",
-    "CUBICLE",
-    "CUBICLE",
-    "CUBICLE",
-  ],
-
-  // Row 14 — 1.7m corridor (south zone)
-  [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-  ],
-
-  // Row 15 — HAT workstations (1.8×0.6m, south wall) + Lockers + South MR6 + Toilets
-  [
-    null,
-    null,
-    null,
-    "HAT01",
-    "HAT02",
-    "HAT03",
-    "HAT04",
-    "HAT05",
-    "HAT06",
-    "HAT07",
-    "HAT08",
-    "HAT09",
-    "HAT10",
-    "HAT11",
-    "HAT12",
-    "HAT13",
-    null,
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    null,
-    "MR6",
-    "MR6",
-    null,
-    "TOILET-G",
-    "TOILET-G",
-    "TOILET-L",
-  ],
-
-  // Row 16 — Electrical panel + HAT workstations + Lockers + South MR4 + Toilets
-  [
-    "ELEC",
-    "ELEC",
-    null,
-    "HAT14",
-    "HAT15",
-    "HAT16",
-    "HAT17",
-    "HAT18",
-    "HAT19",
-    "HAT20",
-    "HAT21",
-    "HAT22",
-    "HAT23",
-    "HAT24",
-    "HAT25",
-    null,
-    null,
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    "LOCKER",
-    null,
-    "MR4",
-    "MR4",
-    null,
-    "TOILET-G",
-    "TOILET-G",
-    "TOILET-L",
-  ],
-
-  // Row 17 — South wall: Storage + Planter strip + Toilets
-  [
-    "ELEC",
-    "STORAGE",
-    "STORAGE",
-    "PLANTER",
-    "PLANTER",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "PLANTER",
-    "PLANTER",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "STORAGE",
-    "PLANTER",
-    "PLANTER",
-    "STORAGE",
-    "STORAGE",
-    "TOILET-G",
-    "TOILET-G",
-    "TOILET-L",
-  ],
-];
 const getCellStyle = (id: CellType): string => {
   if (!id) return "";
 
@@ -665,49 +52,59 @@ const getCellStyle = (id: CellType): string => {
       return "bg-muted";
   }
 };
-export function FloorTable() {
-  const cols = floorMatrix[0].length;
+export function FloorTable({ floorId }: { floorId: string }) {
+  // 1. Ensure your state always has a default structure
+  const [floorData, setFloorData] = useState<{
+    matrix: string[][];
+    max_cols: number;
+  }>({
+    matrix: [],
+    max_cols: 0,
+  });
 
-  // Convert matrix → table data
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    fetch("/api/floorplan/", {
+      method: "POST",
+      body: JSON.stringify({ id: floorId }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setFloorData(data);
+
+        console.log("resposne form the API in Frontennd",data);
+        setLoading(false);
+      });
+  }, [floorId]);
+
+  // 2. Add the null-check in useMemo
   const data = useMemo(() => {
-    return floorMatrix.map((row) => {
-      const obj: Record<string, CellType> = {};
-      row.forEach((cell, i) => {
+    // Use optional chaining and fallback to empty array
+    return (floorData?.matrix || []).map((row) => {
+      const obj: Record<string, string | null> = {};
+      // Ensure row exists before forEach
+      (row || []).forEach((cell, i) => {
         obj[`col_${i}`] = cell;
       });
       return obj;
     });
-  }, []);
+  }, [floorData]);
 
-  // Generate columns dynamically
-  const columns = useMemo<ColumnDef<Record<string, CellType>>[]>(
-    () =>
-      Array.from({ length: cols }, (_, i) => ({
-        accessorKey: `col_${i}`,
-        cell: ({ getValue, row }) => {
-          const seat = getValue<CellType>();
-          const ri = row.index;
-
-          if (!seat) {
-            return <div className=" h-5" />;
-          }
-
-          return (
-            <div
-              key={`${ri}-${i}-${seat}`}
-              className={`h-5 p-0 m-0 rounded-xs  flex items-center justify-center font-medium text-xs overflow-clip ${getCellStyle(
-                seat,
-              )}`}
-              title={seat}
-            >
-              {seat.slice(0, 1) + "."}
-            </div>
-          );
-        },
-      })),
-    [cols],
-  );
+  const columns = useMemo(() => {
+    const colCount = floorData?.max_cols || 0;
+    return Array.from({ length: colCount }, (_, i) => ({
+      accessorKey: `col_${i}`,
+      cell: ({ getValue }: any) => {
+        const seat = getValue();
+        return (
+          <div className={`h-6 w-full ${getCellStyle(seat)}`}>
+            {seat ? seat.slice(0, 3) : ""}
+          </div>
+        );
+      },
+    }));
+  }, [floorData?.max_cols]);
 
   const table = useReactTable({
     data,
@@ -715,21 +112,42 @@ export function FloorTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  if (loading)
+    return (
+      <div className="p-10 animate-pulse text-center">Loading Floor Map...</div>
+    );
+
   return (
-    <div className="w-full h-fit overflow-auto pb-4">
-      <div className="bg-border">
-        {table.getRowModel().rows.map((row) => (
-          <div key={row.id} className="flex">
-            {row.getVisibleCells().map((cell) => (
-              <div
-                key={cell.id}
-                className="flex-1 min-w-[25px] border hover:bg-red-400"
-              >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </div>
-            ))}
-          </div>
-        ))}
+    <div className="w-full overflow-hidden">
+      {/* Mini Legend for R&D context */}
+      <div className="p-2 bg-slate-50 border-t flex gap-4 text-[10px] text-slate-500 overflow-x-auto">
+        <span>* A/B/C: Workstations</span>
+        <span>* MR: Meeting Rooms</span>
+        <span>* LIFT/STAIR: Facilities</span>
+      </div>
+      {/* Scrollable Container */}
+      <div className="overflow-auto max-h-[80vh] relative">
+        <div
+          className="grid gap-0"
+          style={{
+            // This is the magic: it forces exactly X columns of 40px each
+            gridTemplateColumns: `repeat(${floorData.max_cols}, 40px)`,
+            width: "fit-content",
+          }}
+        >
+          {table.getRowModel().rows.map((row) => (
+            <React.Fragment key={row.id}>
+              {row.getVisibleCells().map((cell) => (
+                <div
+                  key={cell.id}
+                  className="outline-[0.5px] outline-slate-200"
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </div>
+              ))}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
     </div>
   );
