@@ -1,4 +1,5 @@
 import { FloorTable } from "@/components/floor/FloorTable";
+import { FloorTableV2 } from "@/components/floor/FloorTableV2";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -142,9 +143,10 @@ const page = () => {
         </div>
 
         {/* RGIHT PANEL */}
-        <div className="col-span-3 space-y-6 overflow-scroll">
+        <div className="col-span-3 flex flex-col space-y-6 overflow-scroll">
           {/* <FloorPlan /> */}
-          <FloorTable floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7" />
+          {/* <FloorTable floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7" /> */}
+          <FloorTableV2 floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7" />
 
           {/* <FloorCanvas /> */}
         </div>
