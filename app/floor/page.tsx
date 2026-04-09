@@ -1,5 +1,5 @@
-import { FloorTable } from "@/components/floor/FloorTable";
 import { FloorTableV2 } from "@/components/floor/FloorTableV2";
+import { SpaceTypeCard } from "@/components/floor/SpaceList";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -83,34 +83,7 @@ const page = () => {
           </Card>
 
           {/* SPACE TYPE */}
-          <Card className="rounded-none">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-semibold text-muted-foreground tracking-wide">
-                SPACE TYPE
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  "Workstation",
-                  "Meeting room",
-                  "Collab area",
-                  "Phone booth",
-                  "Locker",
-                  "Cubicle",
-                ].map((item) => (
-                  <Button
-                    key={item}
-                    variant="outline"
-                    className="justify-start"
-                  >
-                    {item}
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <SpaceTypeCard floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7" />
 
           {/* SPACE LIST */}
           <Card className="rounded-none">

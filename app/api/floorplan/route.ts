@@ -1,18 +1,6 @@
 // app/api/floor-plan/route.ts
-import { Pool } from "pg";
 
-export const dynamic = "force-dynamic";
-
-const globalForPg = global as unknown as { pool: Pool };
-const pool =
-  globalForPg.pool ||
-  new Pool({
-    connectionString: process.env.POSTGRES_URL,
-    connectionTimeoutMillis: 5000,
-    max: 10,
-  });
-
-if (process.env.NODE_ENV !== "production") globalForPg.pool = pool;
+import { pool } from "../route";
 
 export async function POST(req: Request) {
   try {
