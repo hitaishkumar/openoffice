@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Armchair,
   Building2,
@@ -89,7 +95,13 @@ export const spaceTypeIconMap: Record<string, React.ElementType> = {
   RECEPTION: Users,
 };
 
-export function SpaceTypeCard({ floorId }: { floorId: string }) {
+type Props = {
+  floorId: string;
+  selectedType: string | null;
+  onSelect: (type: string | null) => void;
+};
+
+export function SpaceTypeCard({ floorId, selectedType, onSelect }: Props) {
   const [data, setData] = useState<SpaceTypeCount[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -114,11 +126,14 @@ export function SpaceTypeCard({ floorId }: { floorId: string }) {
   }, [floorId]);
 
   return (
-    <Card className="rounded-none">
+    <Card className="rounded-none overflow-scroll ">
       <CardHeader className="pb-2">
         <CardTitle className="text-xs font-semibold text-muted-foreground tracking-wide">
           SPACE TYPE
         </CardTitle>
+        <CardDescription className="text-xs text-muted-foreground tracking-wide">
+          select to highlight
+        </CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -131,14 +146,20 @@ export function SpaceTypeCard({ floorId }: { floorId: string }) {
               const label = spaceTypeLabelMap[item.cell_type] || item.cell_type;
 
               const isLong = label.length > 10;
-
+              const isActive = selectedType === item.cell_type;
               return (
                 <Button
                   key={item.cell_type}
-                  variant="outline"
+                  variant={isActive ? "default" : "outline"}
                   className={`text-xs flex justify-between items-center ${
                     isLong ? "col-span-2" : ""
                   }`}
+                  onClick={
+                    () => {
+                      onSelect(isActive ? null : item.cell_type);
+                      console.log("Selected Space", item.cell_type);
+                    } // toggle
+                  }
                 >
                   {isLong ? (
                     <div className="flex w-full items-center justify-between">
@@ -149,7 +170,7 @@ export function SpaceTypeCard({ floorId }: { floorId: string }) {
                         <span>{label}</span>
                       </div>
 
-                      <span className="text-muted-foreground">
+                      <span className="text-muted-foreground bg-green-300/50 border shadow-sm rounded-full h-5 w-6 flex items-center justify-center">
                         {Number(item.count)}
                       </span>
                     </div>
@@ -162,7 +183,7 @@ export function SpaceTypeCard({ floorId }: { floorId: string }) {
                         <span>{label}</span>
                       </div>
 
-                      <span className="text-muted-foreground">
+                      <span className="text-muted-foreground bg-green-300/40 rounded-full shadow-sm h-5 w-6 flex items-center justify-center">
                         {Number(item.count)}
                       </span>
                     </div>

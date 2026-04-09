@@ -1,3 +1,4 @@
+"use client";
 import { FloorTableV2 } from "@/components/floor/FloorTableV2";
 import { SpaceTypeCard } from "@/components/floor/SpaceList";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
+import { useState } from "react";
 
 const page = () => {
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   return (
     <div className="h-full">
       {/* NAVBAR */}
@@ -83,7 +86,11 @@ const page = () => {
           </Card>
 
           {/* SPACE TYPE */}
-          <SpaceTypeCard floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7" />
+          <SpaceTypeCard
+            selectedType={selectedType}
+            onSelect={setSelectedType}
+            floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7"
+          />
 
           {/* SPACE LIST */}
           <Card className="rounded-none">
@@ -119,7 +126,10 @@ const page = () => {
         <div className="col-span-3 flex flex-col space-y-6 overflow-scroll">
           {/* <FloorPlan /> */}
           {/* <FloorTable floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7" /> */}
-          <FloorTableV2 floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7" />
+          <FloorTableV2
+            selectedType={selectedType}
+            floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7"
+          />
 
           {/* <FloorCanvas /> */}
         </div>

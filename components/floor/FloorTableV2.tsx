@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Info } from "lucide-react";
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { Info, Loader2 } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
 
 type CellType = string | null;
 
@@ -31,16 +32,28 @@ const getCellStyle = (id: CellType): string => {
   if (map[id]) return map[id];
 
   // Workstation defaults
-  if (id.includes("WORKSTATION")) return "bg-white text-slate-900 border-slate-200 shadow-sm";
-  
+  if (id.includes("WORKSTATION"))
+    return "bg-white text-slate-900 border-slate-200 shadow-sm";
+
   return "bg-muted/30 text-muted-foreground border-transparent";
 };
 
-export function FloorTableV2({ floorId }: { floorId: string }) {
-  const [floorData, setFloorData] = useState<{ matrix: string[][]; max_cols: number }>({
+export function FloorTableV2({
+  floorId,
+  selectedType,
+}: {
+  floorId: string;
+  selectedType: string | null;
+}) {
+  const [floorData, setFloorData] = useState<{
+    matrix: string[][];
+    max_cols: number;
+  }>({
     matrix: [],
     max_cols: 0,
   });
+
+  console.log("selected TYPE in Table", selectedType);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,40 +68,42 @@ export function FloorTableV2({ floorId }: { floorId: string }) {
       });
   }, [floorId]);
 
-  const data = useMemo(() => 
-    (floorData?.matrix || []).map((row) => {
-      const obj: Record<string, string | null> = {};
-      (row || []).forEach((cell, i) => { obj[`col_${i}`] = cell; });
-      return obj;
-    }), [floorData]);
+  const data = useMemo(
+    () =>
+      (floorData?.matrix || []).map((row) => {
+        const obj: Record<string, string | null> = {};
+        (row || []).forEach((cell, i) => {
+          obj[`col_${i}`] = cell;
+        });
+        return obj;
+      }),
+    [floorData],
+  );
 
-  const columns = useMemo(() => 
-    Array.from({ length: floorData?.max_cols || 0 }, (_, i) => ({
-      accessorKey: `col_${i}`,
-      cell: ({ getValue }: any) => {
-        const seat = getValue();
-        if (!seat) return <div className="h-8 w-10" />;
+  const columns = useMemo(
+    () =>
+      Array.from({ length: floorData?.max_cols || 0 }, (_, i) => ({
+        accessorKey: `col_${i}`,
+        cell: ({ getValue }: any) => {
+          const seat = getValue();
+          if (!seat) return <div className="h-6 w-8" />;
 
-        return (
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className={`
-                  h-8 w-10 rounded-sm border flex items-center justify-center 
-                  text-[9px] font-semibold transition-all hover:ring-2 hover:ring-primary/20 cursor-default
-                  ${getCellStyle(seat)}
-                `}>
-                  {seat.split('_').pop()?.slice(0, 3)}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-[11px]">
-                <p className="font-bold">{seat.replace(/_/g, ' ')}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      },
-    })), [floorData?.max_cols]);
+          const isMatch = selectedType ? seat.startsWith(selectedType) : true;
+
+          return (
+            <div
+              className={`
+              h-6 w-8 rounded-sm border flex items-center justify-center text-[9px] font-semibold transition-all hover:ring-2 hover:ring-primary/20 cursor-default
+              ${isMatch ? getCellStyle(seat) : "opacity-20 grayscale"}
+            `}
+            >
+              {seat.split("_").pop()?.slice(0, 3)}
+            </div>
+          );
+        },
+      })),
+    [floorData?.max_cols, selectedType], // ✅ THIS is the fix
+  );
 
   const table = useReactTable({
     data,
@@ -96,54 +111,56 @@ export function FloorTableV2({ floorId }: { floorId: string }) {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  if (loading) return (
-    <div className="flex h-[400px] w-full items-center justify-center text-muted-foreground">
-      <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-      <span>Calculating floor dynamics...</span>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex h-[400px] w-full items-center justify-center text-muted-foreground">
+        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+        <span>Calculating floor dynamics...</span>
+      </div>
+    );
 
   return (
-
-      <div className="px-0">
-        {/* Scrollable Map Area */}
-        <div className="rounded-md  bg-muted/20 p-4">
-          <ScrollArea className="w-full whitespace-nowrap rounded-md">
-            <div
-              className="grid gap-1 p-1"
-              style={{
-                gridTemplateColumns: `repeat(${floorData.max_cols}, 40px)`,
-                width: "fit-content",
-              }}
-            >
-              {table.getRowModel().rows.map((row) => (
-                <React.Fragment key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <div key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </div>
-                  ))}
-                </React.Fragment>
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-            <ScrollBar orientation="vertical" />
-          </ScrollArea>
+    <div className="px-0">
+      {/* Improved Legend */}
+      <div className="mt-6 flex flex-wrap gap-4 items-center text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-xs">
+          <Info className="h-3.5 w-3.5" />
+          <span className="font-medium">Legend:</span>
         </div>
-
-        {/* Improved Legend */}
-        <div className="mt-6 flex flex-wrap gap-4 items-center text-muted-foreground">
-          <div className="flex items-center gap-1.5 text-xs">
-            <Info className="h-3.5 w-3.5" />
-            <span className="font-medium">Legend:</span>
-          </div>
-          <Separator orientation="vertical" className="h-4" />
-          <LegendItem color="bg-white border-slate-200" label="Workstation" />
-          <LegendItem color="bg-orange-100 border-orange-200" label="Meeting Room" />
-          <LegendItem color="bg-emerald-50 border-emerald-200" label="Collab" />
-          <LegendItem color="bg-zinc-800" label="Infrastructure" />
-        </div>
+        <Separator orientation="vertical" className="h-4" />
+        <LegendItem color="bg-white border-slate-200" label="Workstation" />
+        <LegendItem
+          color="bg-orange-100 border-orange-200"
+          label="Meeting Room"
+        />
+        <LegendItem color="bg-emerald-50 border-emerald-200" label="Collab" />
+        <LegendItem color="bg-zinc-800" label="Infrastructure" />
       </div>
+      {/* Scrollable Map Area */}
+      <div className="rounded-md  bg-muted/20 p-4">
+        <ScrollArea className="w-fit whitespace-nowrap rounded-md">
+          <div
+            className="grid p-1 "
+            style={{
+              gridTemplateColumns: `repeat(${floorData.max_cols}, 39px)`,
+              width: "fit-content",
+            }}
+          >
+            {table.getRowModel().rows.map((row) => (
+              <React.Fragment key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <div key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </div>
+                ))}
+              </React.Fragment>
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" />
+          <ScrollBar orientation="vertical" />
+        </ScrollArea>
+      </div>
+    </div>
   );
 }
 
