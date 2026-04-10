@@ -11,11 +11,18 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
+import { CircleX, Plus } from "lucide-react";
 import { useState } from "react";
 
 const page = () => {
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [showBookingSidebar, setShowBookingSidebar] = useState(false);
+
+  const handleBooking = () => {
+    console.log("Booking button clicked");
+    setShowBookingSidebar(true);
+  };
+
   return (
     <div className="h-full">
       {/* NAVBAR */}
@@ -33,10 +40,53 @@ const page = () => {
             <span className="text-green-700 font-bold">100</span>
             <span className="text-xs text-gray-400 font-bold">Available</span>
           </div>
-          <Button>
+          <Button onClick={handleBooking} className="h-12">
             {" "}
             <Plus /> New Booking
           </Button>
+          {showBookingSidebar && (
+            <div className="fixed top-0 right-0 w-80 h-full bg-white shadow-lg p-6 flex flex-col overflow-y-auto">
+              <div className="flex flex-row justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">New Booking</h2>
+                <CircleX onClick={() => setShowBookingSidebar(false)} className="cursor-pointer" />
+              </div>
+              
+              <div className="space-y-4">
+                {/* Name Field */}
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input placeholder="Enter your name" />
+                </div>
+
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <Label>Email ID</Label>
+                  <Input type="email" placeholder="Enter your email" />
+                </div>
+
+                {/* Booking Date Field */}
+                <div className="space-y-2">
+                  <Label>Booking Date</Label>
+                  <Input type="date" />
+                </div>
+
+                {/* Seat Type Field */}
+                <div className="space-y-2">
+                  <Label>Seat Type</Label>
+                  <select className="w-full border rounded-md px-3 py-2">
+                    <option value="">Select seat type</option>
+                    <option value="workstation">Workstation</option>
+                    <option value="meeting-room">Meeting Room</option>
+                    <option value="private-office">Private Office</option>
+                    <option value="conference-room">Conference Room</option>
+                  </select>
+                </div>
+
+                {/* Confirm Button */}
+                <Button className="w-full mt-6">Confirm Booking</Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
