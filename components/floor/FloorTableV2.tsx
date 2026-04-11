@@ -3,18 +3,39 @@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
+  ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { Info, Loader2 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
+import { CellDetailsSheet } from "../cell/CellSheet";
+import { PantryDetailsSheet } from "../cell/PantrySheet";
+import { Badge } from "../ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { spaceTypeLabelMap } from "./SpaceList";
 
-type CellType = string | null;
+type FloorCellNode = {
+  row_num: number;
+  col_num: number;
+  floor_cell_id: string;
+  cell_type: string;
+  capacity: number;
+  is_bookable: boolean;
+  metadata: Record<string, any>;
+};
+
+type FloorPlanResponse = {
+  matrix: FloorCellNode[][];
+  max_cols: number;
+};
+
+type RowType = Record<string, FloorCellNode | null>;
 
 // Refined color palette for a cleaner look
-const getCellStyle = (id: CellType): string => {
-  if (!id) return "bg-transparent";
+const getCellStyle = (floorCellNode: FloorCellNode): string => {
+  if (!floorCellNode.cell_type) return "bg-transparent";
 
   const map: Record<string, string> = {
     LIFT: "bg-slate-200 text-slate-600 border-slate-300",
@@ -29,10 +50,10 @@ const getCellStyle = (id: CellType): string => {
     LOCKER: "bg-slate-50 text-slate-500 border-slate-200",
   };
 
-  if (map[id]) return map[id];
+  if (map[floorCellNode.cell_type]) return map[floorCellNode.cell_type];
 
   // Workstation defaults
-  if (id.includes("WORKSTATION"))
+  if (floorCellNode.cell_type.includes("WORKSTATION"))
     return "bg-white text-slate-900 border-slate-200 shadow-sm";
 
   return "bg-muted/30 text-muted-foreground border-transparent";
@@ -45,33 +66,39 @@ export function FloorTableV2({
   floorId: string;
   selectedType: string | null;
 }) {
-  const [floorData, setFloorData] = useState<{
-    matrix: string[][];
-    max_cols: number;
-  }>({
+  const [floorData, setFloorData] = useState<FloorPlanResponse>({
     matrix: [],
     max_cols: 0,
   });
 
-  console.log("selected TYPE in Table", selectedType);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/floorplan/", {
+    if (!floorId) return;
+
+    fetch("/api/floorplan", {
+      // ✅ removed trailing slash
       method: "POST",
+      headers: {
+        "Content-Type": "application/json", // ✅ required
+      },
       body: JSON.stringify({ id: floorId }),
     })
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: FloorPlanResponse) => {
         setFloorData(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch floor data", err);
         setLoading(false);
       });
   }, [floorId]);
 
-  const data = useMemo(
+  const data = useMemo<RowType[]>(
     () =>
       (floorData?.matrix || []).map((row) => {
-        const obj: Record<string, string | null> = {};
+        const obj: RowType = {};
         (row || []).forEach((cell, i) => {
           obj[`col_${i}`] = cell;
         });
@@ -80,29 +107,89 @@ export function FloorTableV2({
     [floorData],
   );
 
-  const columns = useMemo(
+  const columns = useMemo<ColumnDef<RowType>[]>(
     () =>
       Array.from({ length: floorData?.max_cols || 0 }, (_, i) => ({
         accessorKey: `col_${i}`,
-        cell: ({ getValue }: any) => {
-          const seat = getValue();
-          if (!seat) return <div className="h-6 w-8" />;
+        cell: ({ getValue }) => {
+          const cell = getValue() as FloorCellNode;
 
-          const isMatch = selectedType ? seat.startsWith(selectedType) : true;
+          if (!cell) return <div className="h-6 w-8" />;
 
+          const seat = cell.cell_type;
+          const isMatch = selectedType ? seat?.startsWith(selectedType) : true;
+          const label = spaceTypeLabelMap[cell.cell_type] || cell.cell_type;
           return (
-            <div
-              className={`
-              h-6 w-8 rounded-sm border flex items-center justify-center text-[9px] font-semibold transition-all hover:ring-2 hover:ring-primary/20 cursor-default
-              ${isMatch ? getCellStyle(seat) : "opacity-20 grayscale"}
-            `}
-            >
-              {seat.split("_").pop()?.slice(0, 3)}
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div
+                  className={`
+                  p-1
+                  h-6 w-8 rounded-sm border flex items-center justify-center text-[9px] font-semibold
+                  transition-all hover:ring-2 hover:ring-primary/20 cursor-default cursor-pointer
+                  ${isMatch ? getCellStyle(cell) : "opacity-20 grayscale"}
+                `}
+                >
+                  {seat?.split("_").pop()?.slice(0, 3)}
+                </div>
+              </PopoverTrigger>
+
+              <PopoverContent
+                side="top"
+                align="center"
+                className="w-70 text-xs"
+              >
+                <div className="flex justify-between">
+                  <div className="font-semibold text-sm">
+                    {label || "Empty"}
+                  </div>
+                  {label ? (
+                    <Badge>{seat}</Badge>
+                  ) : (
+                    <Badge variant={"destructive"} className="text-sm">
+                      Not Assigned
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="text-muted-foreground">
+                  Row: {cell.row_num} | Col: {cell.col_num}
+                </div>
+
+                <div>
+                  <span className="font-medium">Capacity:</span>{" "}
+                  {cell.capacity ?? "-"}
+                </div>
+
+                <div>
+                  <span className="font-medium">Bookable:</span>{" "}
+                  {cell.is_bookable ? "Yes" : "No"}
+                </div>
+                {cell.floor_cell_id && (
+                  <div className="truncate">
+                    <span className="font-medium">ID:</span>{" "}
+                    {cell.floor_cell_id}
+                  </div>
+                )}
+                <div className="pt-2">
+                  <CellDetailsSheet cell={cell} />
+                  <PantryDetailsSheet cell={cell} />
+                </div>
+
+                {cell.metadata && Object.keys(cell.metadata).length > 0 && (
+                  <div className="pt-1 border-t">
+                    <span className="font-medium">Metadata:</span>
+                    <pre className="text-[10px] mt-1 whitespace-pre-wrap">
+                      {JSON.stringify(cell.metadata, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
           );
         },
       })),
-    [floorData?.max_cols, selectedType], // ✅ THIS is the fix
+    [floorData?.max_cols, selectedType],
   );
 
   const table = useReactTable({
@@ -140,7 +227,7 @@ export function FloorTableV2({
       <div className="rounded-md  bg-muted/20 p-4">
         <ScrollArea className="w-fit whitespace-nowrap rounded-md">
           <div
-            className="grid p-1 "
+            className="grid "
             style={{
               gridTemplateColumns: `repeat(${floorData.max_cols}, 39px)`,
               width: "fit-content",
@@ -149,7 +236,7 @@ export function FloorTableV2({
             {table.getRowModel().rows.map((row) => (
               <React.Fragment key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <div key={cell.id}>
+                  <div key={cell.id} className="p-0.5">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </div>
                 ))}

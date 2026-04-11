@@ -17,6 +17,7 @@ import {
   Building2,
   CalendarDays,
   DoorOpen,
+  Hamburger,
   Layers,
   LayoutDashboard,
   Lock,
@@ -41,6 +42,7 @@ const manageItems = [
   { title: "Phone booths", url: "/manage/booths", icon: Phone },
   { title: "Teams", url: "/manage/teams", icon: Users },
   { title: "Cubicles", url: "/manage/cubicles", icon: Layers },
+  { title: "Pantry", url: "/manage/pantry", icon: Hamburger },
 ];
 
 const adminItems = [
