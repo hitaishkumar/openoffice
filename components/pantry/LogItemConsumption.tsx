@@ -15,6 +15,7 @@ import {
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "../ui/badge";
 import { Item } from "./InventoryTable";
 
 type Props = {
@@ -63,18 +64,26 @@ export function LogItemConsumption({ item }: Props) {
             </Field>
 
             <Field>
-              <Label>Available Stock</Label>
-              <div className="text-sm text-muted-foreground">{item.stock}</div>
+              <Label className="flex justify-between">
+                Available Stock
+                <Badge variant={"destructive"}>OVER BOOKED</Badge>
+              </Label>
+
+              <div className="text-sm text-muted-foreground">
+                {item.current_quantity}
+              </div>
             </Field>
             <Field>
-              <Label>Available Stock</Label>
+              <Label>Max Stock</Label>
               <div className="space-y-1">
-                <div className="text-xs font-medium">{item.stock}</div>
+                <div className="text-xs font-medium">{item.max_capacity}</div>
 
                 <div className="h-1.5 bg-muted rounded">
                   <div
                     className={`h-full ${getBarColor(item.status)}`}
-                    style={{ width: `${item.percent}%` }}
+                    style={{
+                      width: `${item.percent > 100 ? 100 : item.percent}%`,
+                    }}
                   />
                 </div>
               </div>
@@ -87,10 +96,10 @@ export function LogItemConsumption({ item }: Props) {
                 id="quantity"
                 name="quantity"
                 type="number"
-                placeholder={`Enter in ${item.stock}`}
+                placeholder={`Enter in ${item.unit}`}
                 required
                 min={1}
-                max={item.stock}
+                max={item.max_capacity}
               />
             </Field>
           </FieldGroup>

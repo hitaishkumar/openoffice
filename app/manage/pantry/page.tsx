@@ -37,7 +37,6 @@ const page = () => {
       <div className="grid grid-cols-4 h-fit min-w-full">
         {/* LEFT PANE */}
         <div className="col-span-1 overflow-y-scroll border-r">
-          {/* DATE & TIME */}
           <Card className="rounded-none h-2/7">
             <CardHeader>
               <CardTitle>Consumtion by Category</CardTitle>
@@ -124,12 +123,16 @@ const page = () => {
         </div>
 
         {/* RGIHT PANEL */}
-        <div className="col-span-3 flex flex-col space-y-6 overflow-scroll p-4">
+        <div className="col-span-3 flex flex-col space-y-6 overflow-scroll">
           {/* <FloorPlan /> */}
           {/* <FloorTable floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7" /> */}
           {/* SPACE LIST */}
-          <UsageSummary />
-          <InventoryTable />
+          <div className="border-b p-4">
+            <UsageSummary />
+          </div>
+          <div className="p-4">
+            <InventoryTable />
+          </div>
 
           {/* <FloorCanvas /> */}
         </div>

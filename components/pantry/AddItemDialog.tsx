@@ -1,157 +1,146 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-import { Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { useState } from "react";
+import { Field, FieldContent, FieldDescription, FieldLabel } from "../ui/field";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
-  CirclePlus,
-  Coffee,
-  Cookie,
-  Droplets,
-  Milk,
-  Package,
-  Wrench,
-} from "lucide-react";
+} from "../ui/select";
 
 export function AddPantryDialog() {
+  const [formData, setFormData] = useState({
+    name: "",
+    category_id: "",
+    unit: "",
+    is_perishable: false,
+    shelf_life_days: 0,
+    default_min_threshold: 0,
+    default_max_capacity: 0,
+    initial_stock: 0,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch("/api/pantry/items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+    // ... handle response
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <CirclePlus className="h-4 w-4 mr-1" />
-          Add Item
-        </Button>
+        <Button variant="outline">Add Item</Button>
       </DialogTrigger>
-
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-lg bg-red-50/80">
         <DialogHeader>
-          <DialogTitle>Add Pantry Item</DialogTitle>
-          <DialogDescription>
-            Add a new item to pantry inventory.
-          </DialogDescription>
+          <DialogTitle>Add New Pantry Item</DialogTitle>
         </DialogHeader>
-
-        <form className="space-y-4">
-          <FieldGroup>
-            {/* Item Name */}
-            <Field>
-              <Label htmlFor="item-name">Item Name</Label>
-              <Input id="item-name" placeholder="e.g. Biscuits" />
-            </Field>
-
-            {/* Category */}
-            <Field>
-              <Label>Category</Label>
-              <Select>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>Name</Label>
+              <Input
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Unit (pcs/kg/L)</Label>
+              <Select defaultValue="banana">
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position={"popper"}>
                   <SelectGroup>
-                    <SelectLabel>Category</SelectLabel>
-                    <SelectItem value="beverages">
-                      <div className="flex items-center gap-2">
-                        <Coffee className="h-4 w-4 text-muted-foreground" />
-                        Beverages
-                      </div>
-                    </SelectItem>
-
-                    <SelectItem value="snacks">
-                      <div className="flex items-center gap-2">
-                        <Cookie className="h-4 w-4 text-muted-foreground" />
-                        Snacks
-                      </div>
-                    </SelectItem>
-
-                    <SelectItem value="dairy">
-                      <div className="flex items-center gap-2">
-                        <Milk className="h-4 w-4 text-muted-foreground" />
-                        Dairy
-                      </div>
-                    </SelectItem>
-
-                    <SelectItem value="dry">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        Dry Goods
-                      </div>
-                    </SelectItem>
-
-                    <SelectItem value="hygiene">
-                      <div className="flex items-center gap-2">
-                        <Droplets className="h-4 w-4 text-muted-foreground" />
-                        Hygiene
-                      </div>
-                    </SelectItem>
-
-                    <SelectItem value="equipment">
-                      <div className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4 text-muted-foreground" />
-                        Equipment
-                      </div>
-                    </SelectItem>
+                    <SelectItem value="banana">Piece</SelectItem>
+                    <SelectItem value="grapes">ml</SelectItem>
+                    <SelectItem value="pineapple">gm</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
-            </Field>
-
-            {/* Grid Fields */}
-            <div className="grid grid-cols-2 gap-3">
-              <Field>
-                <Label htmlFor="stock">Current Stock</Label>
-                <Input id="stock" type="number" placeholder="0" />
-              </Field>
-
-              <Field>
-                <Label htmlFor="capacity">Max Capacity</Label>
-                <Input id="capacity" type="number" placeholder="0" />
-              </Field>
-
-              <Field>
-                <Label htmlFor="unit">Unit</Label>
-                <Input id="unit" placeholder="e.g. pcs / kg" />
-              </Field>
-
-              <Field>
-                <Label htmlFor="expiry">Expiry Date</Label>
-                <Input id="expiry" type="date" />
-              </Field>
             </div>
+          </div>
 
-            {/* Supplier / Notes */}
-            <Field>
-              <Label htmlFor="supplier">Supplier</Label>
-              <Input id="supplier" placeholder="Optional" />
-            </Field>
-          </FieldGroup>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>Stock</Label>
+              <Input
+                type="number"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    initial_stock: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Min Threshold</Label>
+              <Input
+                type="number"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    default_min_threshold: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Max Capacity</Label>
+              <Input
+                type="number"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    default_max_capacity: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <Label htmlFor="airplane-mode">Item is perishable</Label>
+          <Switch
+            id="airplane-mode"
+            className="text-red-300 border-2"
+            checked={formData.is_perishable}
+            onCheckedChange={(checked) =>
+              setFormData({ ...formData, is_perishable: checked })
+            }
+          />
+
+          <Field orientation="horizontal">
+            <FieldContent>
+              <FieldLabel htmlFor="align-item">Align Item</FieldLabel>
+              <FieldDescription>
+                Toggle to align the item with the trigger.
+              </FieldDescription>
+            </FieldContent>
+            <Switch id="align-item" />
+          </Field>
 
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-
-            <Button type="submit">Add Item</Button>
+            <Button type="submit">Create Item</Button>
           </DialogFooter>
         </form>
       </DialogContent>
