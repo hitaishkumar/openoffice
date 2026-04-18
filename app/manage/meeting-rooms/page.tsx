@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import { AddMeetingRoomDialog } from "@/components/meeting-rooms/AddRoomDialog";
 import { MeetingRoomsList } from "@/components/meeting-rooms/MeetingRoomsList";
 import RoomSummary from "@/components/meeting-rooms/RoomSummary";
@@ -18,7 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Calendar, Plus } from "lucide-react";
+import { Calendar } from "lucide-react";
+import { useState } from "react";
 
 type MeetingRoom = {
   id: string;
@@ -59,7 +59,13 @@ const page = () => {
       floor: "3rd Floor",
       capacity: 20,
       status: "available" as const,
-      facilities: ["Projector", "Video Conference", "Whiteboard", "AC", "Sound System"],
+      facilities: [
+        "Projector",
+        "Video Conference",
+        "Whiteboard",
+        "AC",
+        "Sound System",
+      ],
       nextBooking: null,
       bookingTime: "—",
     },
@@ -112,7 +118,11 @@ const page = () => {
       {/* NAVBAR */}
       <div className="border-b w-full h-15">
         <div className="flex gap-4 items-center justify-end pr-4 h-full">
-          <Button className="shadow-sm" variant="secondary" onClick={() => setShowCalendar(true)}>
+          <Button
+            className="shadow-sm"
+            variant="secondary"
+            onClick={() => setShowCalendar(true)}
+          >
             <Calendar /> View Calendar
           </Button>
           <AddMeetingRoomDialog onAddRoom={handleAddRoom} />
@@ -149,7 +159,9 @@ const page = () => {
               <div className="space-y-2">
                 <div className="grid grid-cols-12 items-center gap-2">
                   {/* Status label */}
-                  <div className="col-span-6 text-xs font-medium">Available</div>
+                  <div className="col-span-6 text-xs font-medium">
+                    Available
+                  </div>
                   <div className="col-span-6 text-right text-xs font-bold text-green-600">
                     3 rooms
                   </div>
@@ -183,7 +195,10 @@ const page = () => {
               {rooms
                 .filter((r) => r.status === "booked")
                 .map((room) => (
-                  <Card key={room.id} className="border-none rounded-lg bg-muted/50 p-3">
+                  <Card
+                    key={room.id}
+                    className="border-none rounded-lg bg-muted/50 p-3"
+                  >
                     <div className="space-y-1">
                       <div className="font-medium text-sm">{room.name}</div>
                       <div className="text-xs text-muted-foreground">
@@ -233,16 +248,22 @@ const page = () => {
             {/* SUMMARY CARDS */}
             <RoomSummary
               totalRooms={rooms.length}
-              availableRooms={rooms.filter((r) => r.status === "available").length}
+              availableRooms={
+                rooms.filter((r) => r.status === "available").length
+              }
               bookedRooms={rooms.filter((r) => r.status === "booked").length}
-              maintenanceRooms={rooms.filter((r) => r.status === "maintenance").length}
+              maintenanceRooms={
+                rooms.filter((r) => r.status === "maintenance").length
+              }
             />
 
             {/* ROOMS TABLE */}
             <div>
               <div className="mb-4">
                 <h2 className="text-lg font-semibold">All Meeting Rooms</h2>
-                <p className="text-sm text-muted-foreground">Manage your office meeting rooms</p>
+                <p className="text-sm text-muted-foreground">
+                  Manage your office meeting rooms
+                </p>
               </div>
               <MeetingRoomsList rooms={filteredRooms} />
             </div>

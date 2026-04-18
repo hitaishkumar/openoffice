@@ -44,13 +44,16 @@ const page = () => {
             </CardHeader>
 
             <CardContent className="space-y-4">
-              <div className="space-y-2 ">
+              <div className="space-y-2">
                 {[10, 20, 30, 40, 50, 60, 70].map((percent) => {
                   return (
-                    <div className="grid grid-cols-12 items-center gap-2 ">
+                    <div
+                      className="grid grid-cols-12 items-center gap-2"
+                      key={percent}
+                    >
                       {/* Category */}
                       <div className="col-span-3 text-xs text-muted-foreground">
-                        {percent + "catrogys"}
+                        {percent + " categories"}
                       </div>
 
                       {/* Progress bar */}

@@ -12,26 +12,18 @@ CREATE TABLE pantry_categories (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
-
 CREATE TABLE pantry_items (
-    item_id UUID PRIMARY KEY DEFAULT uuidv7(),
-
+    item_id UUID PRIMARY KEY DEFAULT uuidv7 (),
     name TEXT NOT NULL,
-    category_id UUID REFERENCES pantry_categories(category_id),
-
+    category_id UUID REFERENCES pantry_categories (category_id),
     unit TEXT NOT NULL,
-
--- new fields
-
-
-is_perishable BOOLEAN DEFAULT false,
+    price_per_unit NUMERIC NOT NULL DEFAULT 0,
+    is_perishable BOOLEAN DEFAULT false,
     shelf_life_days INT,
     default_min_threshold NUMERIC,
     default_max_capacity NUMERIC,
-
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),
-
     UNIQUE (name, category_id)
 );
 

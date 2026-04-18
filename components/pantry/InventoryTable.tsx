@@ -1,28 +1,22 @@
 "use client";
 
+import { LIST_PANTRY_INVENTORY } from "@/app/constant/keys";
+import { getInventory } from "@/app/mutations/pantry/inventory/get_inventory";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { EditItemDialog } from "./EditItemDialog";
 import { LogItemConsumption } from "./LogItemConsumption";
+import { InventoryItem } from "./types";
 
-export interface Item {
-  name: string;
-  category: string;
-  status: "out" | "low" | "ok" | "over";
-  current_quantity: number;
-  max_capacity: number;
-  percent: number;
-  expiry?: string; // Added from your original requirements
-  consumed?: string; // Added from your original requirements
-  unit: string;
-}
 // Helper styles kept outside to prevent recreation on render
-const getStatusStyle = (status: Item["status"]) =>
+const getStatusStyle = (status: InventoryItem["status"]) =>
   status === "out"
     ? "bg-red-100 text-red-700"
     : status === "low"
@@ -31,7 +25,7 @@ const getStatusStyle = (status: Item["status"]) =>
         ? "bg-red-100 text-red-700"
         : "bg-green-100 text-green-700";
 
-const getBarColor = (status: Item["status"]) =>
+const getBarColor = (status: InventoryItem["status"]) =>
   status === "out"
     ? "bg-red-500"
     : status === "low"
@@ -39,24 +33,17 @@ const getBarColor = (status: Item["status"]) =>
       : "bg-green-500";
 
 export function InventoryTable() {
-  const [data, setData] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
+  const inventoryQuery = useQuery({
+    queryKey: [LIST_PANTRY_INVENTORY],
+    queryFn: getInventory,
+    enabled: true,
+    refetchInterval: 3000,
+  });
 
-  useEffect(() => {
-    fetch("/api/pantry/inventory")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success) setData(json.data);
-        console.log(json.data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  const columns = useMemo<ColumnDef<Item>[]>(
+  const columns = useMemo<ColumnDef<InventoryItem>[]>(
     () => [
-      { header: "Item", accessorKey: "name" },
-      { header: "Category", accessorKey: "category" },
+      { header: "Item", accessorKey: "item_name" },
+      { header: "Category", accessorKey: "category_name" },
       {
         header: "Status",
         accessorKey: "status",
@@ -75,14 +62,36 @@ export function InventoryTable() {
       {
         header: "Stock",
         cell: ({ row }) => {
-          const { current_quantity, max_capacity, percent, status, unit } =
-            row.original;
+          const {
+            current_quantity,
+            max_capacity,
+            percent,
+            status,
+            unit,
+            min_threshold,
+          } = row.original;
+
           return (
-            <div className="space-y-1">
-              <div className="text-xs font-medium">
-                {current_quantity} / {max_capacity} {unit}
+            <div className="space-y-1 pr-4">
+              <div className="flex items-center justify-between text-xs">
+                {/* Min (left) */}
+                <span className="text-muted-foreground">
+                  {min_threshold ?? "-"}
+                </span>
+
+                {/* Current (center - slightly bigger) */}
+                <span className="text-xs font-extrabold">
+                  {current_quantity} {unit}
+                </span>
+
+                {/* Max (right) */}
+                <span className="text-muted-foreground">
+                  {max_capacity ?? "-"}
+                </span>
               </div>
-              <div className="h-1.5 bg-muted rounded w-24">
+
+              {/* Progress bar (unchanged) */}
+              <div className="h-1.5 bg-muted-foreground rounded w-full">
                 <div
                   className={`h-full ${getBarColor(status)}`}
                   style={{ width: `${percent > 100 ? 100 : percent}%` }}
@@ -92,16 +101,46 @@ export function InventoryTable() {
           );
         },
       },
-      { header: "Quota", accessorKey: "max_capacity" },
-      { header: "Expiry", accessorKey: "expiry" },
+      {
+        header: "Expiry",
+        cell: ({ row }) => (
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={row.original.is_perishable ? "default" : "outline"}
+            >
+              {row.original.is_perishable
+                ? (() => {
+                    const created = new Date(row.original.created_at);
+                    const expiry = new Date(
+                      created.getTime() +
+                        (row.original.shelf_life_days ?? 0) *
+                          24 *
+                          60 *
+                          60 *
+                          1000,
+                    );
+
+                    const now = new Date();
+                    const diffMs = expiry.getTime() - now.getTime();
+                    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+                    if (diffDays < 0) return "Expired";
+                    if (diffDays === 0) return "Expires today";
+
+                    return `${diffDays}d left`;
+                  })()
+                : "No Expiry"}{" "}
+            </Button>
+          </div>
+        ),
+      },
       {
         header: "Actions",
         cell: ({ row }) => (
           <div className="flex gap-2">
-            <Button size="sm" variant="outline">
-              Edit
-            </Button>
-            <LogItemConsumption item={row.original} />
+            <EditItemDialog inventoryItem={row.original} />
+            <LogItemConsumption inventoryItem={row.original} />
           </div>
         ),
       },
@@ -110,12 +149,12 @@ export function InventoryTable() {
   );
 
   const table = useReactTable({
-    data,
+    data: inventoryQuery.data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
 
-  if (loading) return <div>Loading inventory...</div>;
+  if (inventoryQuery.isLoading) return <div>Loading inventory...</div>;
 
   return (
     <div className="border rounded-md overflow-hidden">

@@ -6,7 +6,7 @@
  */
 export interface ApiResponse<T> {
   success: boolean;
-  data?: T;
+  data: T;
   error?: string;
   message?: string;
   meta?: {
@@ -14,3 +14,23 @@ export interface ApiResponse<T> {
     totalCount?: number;
   };
 }
+
+export async function callapi<T>(
+  url: string,
+  options?: RequestInit,
+): Promise<T> {
+  const res = await fetch(url, options);
+  const json = await res.json();
+
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || "API Error");
+  }
+
+  return json.data;
+}
+
+// export type ApiResponse<T> = {
+//   success: boolean;
+//   data: T;
+//   error?: string;
+// };

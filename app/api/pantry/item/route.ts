@@ -1,20 +1,38 @@
-import { z } from "zod";
-
-export const pantryItemSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  category_id: z.string().uuid("Invalid category ID"),
-  unit: z.string().min(1, "Unit is required"),
-  is_perishable: z.boolean().default(false),
-  shelf_life_days: z.number().int().optional(),
-  default_min_threshold: z.number().nonnegative(),
-  default_max_capacity: z.number().positive(),
-  // Optional: stock data if you want to initialize it during creation
-  initial_stock: z.number().nonnegative().default(0),
-});
-
 import { ApiResponse } from "@/app/types/api";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { pool } from "../../route";
+
+export const pantryItemSchema = z
+  .object({
+    name: z.string().min(1, "Name is required"),
+    unit: z.string().min(1, "Unit is required"),
+
+    category_id: z
+      .string()
+      .uuid({ message: "Invalid category ID", version: "v7" }),
+    pantry_id: z
+      .string()
+      .uuid({ message: "Invalid category ID", version: "v7" }),
+
+    is_perishable: z.boolean().default(false),
+
+    shelf_life_days: z.number().int().positive().optional(),
+
+    default_min_threshold: z.number().nonnegative(),
+    default_max_capacity: z.number().positive(),
+
+    initial_stock: z.number().nonnegative().default(0),
+  })
+  .superRefine((data, ctx) => {
+    if (data.is_perishable && !data.shelf_life_days) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["shelf_life_days"],
+        message: "Shelf life is required for perishable items",
+      });
+    }
+  });
 
 export async function POST(req: Request) {
   try {
@@ -27,7 +45,7 @@ export async function POST(req: Request) {
         {
           success: false,
           error: "Invalid data",
-          details: validation.error.format(),
+          details: validation.error,
         },
         { status: 400 },
       );
@@ -42,6 +60,7 @@ export async function POST(req: Request) {
       default_min_threshold,
       default_max_capacity,
       initial_stock,
+      pantry_id,
     } = validation.data;
 
     await pool.query("BEGIN");
@@ -66,22 +85,30 @@ export async function POST(req: Request) {
 
     // 3. Initialize Stock
     await pool.query(
-      `INSERT INTO pantry_stock (item_id, current_quantity, max_capacity, min_threshold) VALUES ($1, $2, $3, $4)`,
-      [itemId, initial_stock, default_max_capacity, default_min_threshold],
+      `INSERT INTO pantry_stock (item_id, current_quantity, max_capacity, min_threshold,pantry_id) VALUES ($1, $2, $3, $4,$5)`,
+      [
+        itemId,
+        initial_stock,
+        default_max_capacity,
+        default_min_threshold,
+        pantry_id,
+      ],
     );
 
     await pool.query("COMMIT");
 
-    const response: ApiResponse<{ item_id: string }> = {
+    const success_response: ApiResponse<{ item_id: string }> = {
       success: true,
       data: { item_id: itemId },
     };
-    return NextResponse.json(response);
+    return NextResponse.json(success_response);
   } catch (error) {
     await pool.query("ROLLBACK");
-    return NextResponse.json(
-      { success: false, error: "Failed to create pantry item" },
-      { status: 500 },
-    );
+    const error_response: ApiResponse<{ item_id: string }> = {
+      success: false,
+      error: JSON.stringify(error),
+      message: "failed to add item ",
+    };
+    return NextResponse.json(error_response);
   }
 }

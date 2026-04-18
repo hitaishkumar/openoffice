@@ -25,6 +25,7 @@ import {
   Phone,
   Plus,
   Settings,
+  Store,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -48,6 +49,8 @@ const manageItems = [
 const adminItems = [
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Settings", url: "/admin/settings", icon: Settings },
+  { title: "Each Supplier", url: "/admin/individual-supplier", icon: Store },
+  { title: "Supplier", url: "/admin/supplier", icon: Store },
 ];
 
 export function AppSidebar() {
