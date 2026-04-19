@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AuthProvider from "@/components/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,17 +31,15 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <TooltipProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <main>
-              {/* <SidebarTrigger /> */}
-
-              {children}
-            </main>
-          </SidebarProvider>
-        </TooltipProvider>
+      <body className="min-h-full w-full flex flex-col">
+        <AuthProvider>
+          <TooltipProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <main>{children}</main>
+            </SidebarProvider>
+          </TooltipProvider>{" "}
+        </AuthProvider>
       </body>
     </html>
   );
