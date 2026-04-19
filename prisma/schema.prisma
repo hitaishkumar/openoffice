@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model floor_cells {
+  floor_id      String   @db.Uuid
+  row_num       Int
+  col_num       Int
+  floor_cell_id String   @id @default(dbgenerated("(((((floor_id)::text || '_'::text) || row_num) || '_'::text) || col_num)"))
+  cell_type     String?
+  capacity      Int?     @default(0)
+  is_bookable   Boolean? @default(false)
+  metadata      Json?    @default("{}")
+  floors        floors   @relation(fields: [floor_id], references: [floor_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([floor_id, row_num, col_num])
+  @@index([floor_id], map: "idx_floor_cells_floor")
+}
+
+model floors {
+  floor_id    String        @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  name        String
+  building    String?
+  created_at  DateTime?     @default(now()) @db.Timestamptz(6)
+  floor_cells floor_cells[]
+}
+
+model users {
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email    String  @unique
+  password String
+  name     String?
+}
