@@ -123,12 +123,7 @@ export function FloorTableV2({
             <Popover>
               <PopoverTrigger asChild>
                 <div
-                  className={`
-                  p-1
-                  h-6 w-8 rounded-sm border flex items-center justify-center text-[9px] font-semibold
-                  transition-all hover:ring-2 hover:ring-primary/20 cursor-default cursor-pointer
-                  ${isMatch ? getCellStyle(cell) : "opacity-20 grayscale"}
-                `}
+                  className={`hover:ring-primary/20 flex h-6 w-8 cursor-default cursor-pointer items-center justify-center rounded-sm border p-1 text-[9px] font-semibold transition-all hover:ring-2 ${isMatch ? getCellStyle(cell) : "opacity-20 grayscale"} `}
                 >
                   {seat?.split("_").pop()?.slice(0, 3)}
                 </div>
@@ -140,7 +135,7 @@ export function FloorTableV2({
                 className="w-70 text-xs"
               >
                 <div className="flex justify-between">
-                  <div className="font-semibold text-sm">
+                  <div className="text-sm font-semibold">
                     {label || "Empty"}
                   </div>
                   {label ? (
@@ -177,9 +172,9 @@ export function FloorTableV2({
                 </div>
 
                 {cell.metadata && Object.keys(cell.metadata).length > 0 && (
-                  <div className="pt-1 border-t">
+                  <div className="border-t pt-1">
                     <span className="font-medium">Metadata:</span>
-                    <pre className="text-[10px] mt-1 whitespace-pre-wrap">
+                    <pre className="mt-1 text-[10px] whitespace-pre-wrap">
                       {JSON.stringify(cell.metadata, null, 2)}
                     </pre>
                   </div>
@@ -200,7 +195,7 @@ export function FloorTableV2({
 
   if (loading)
     return (
-      <div className="flex h-[400px] w-full items-center justify-center text-muted-foreground">
+      <div className="text-muted-foreground flex h-[400px] w-full items-center justify-center">
         <Loader2 className="mr-2 h-6 w-6 animate-spin" />
         <span>Calculating floor dynamics...</span>
       </div>
@@ -209,7 +204,7 @@ export function FloorTableV2({
   return (
     <div className="px-0">
       {/* Improved Legend */}
-      <div className="mt-6 flex flex-wrap gap-4 items-center text-muted-foreground">
+      <div className="text-muted-foreground mt-6 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-1.5 text-xs">
           <Info className="h-3.5 w-3.5" />
           <span className="font-medium">Legend:</span>
@@ -224,10 +219,10 @@ export function FloorTableV2({
         <LegendItem color="bg-zinc-800" label="Infrastructure" />
       </div>
       {/* Scrollable Map Area */}
-      <div className="rounded-md  bg-muted/20 p-4">
-        <ScrollArea className="w-fit whitespace-nowrap rounded-md">
+      <div className="bg-muted/20 rounded-md p-4">
+        <ScrollArea className="w-fit rounded-md whitespace-nowrap">
           <div
-            className="grid "
+            className="grid"
             style={{
               gridTemplateColumns: `repeat(${floorData.max_cols}, 39px)`,
               width: "fit-content",

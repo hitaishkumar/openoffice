@@ -9,10 +9,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CircleX, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const Page = () => {
   const [selectedType, setSelectedType] = useState<string | null>(null);
