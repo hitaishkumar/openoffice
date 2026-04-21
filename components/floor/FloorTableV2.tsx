@@ -95,6 +95,7 @@ export function FloorTableV2({
   });
 
   const [loading, setLoading] = useState(true);
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!floorId) return;
@@ -134,21 +135,27 @@ export function FloorTableV2({
     () =>
       Array.from({ length: floorData?.max_cols || 0 }, (_, i) => ({
         accessorKey: `col_${i}`,
-        cell: ({ getValue }) => {
+        cell: ({ getValue, row }) => {
           const cell = getValue() as FloorCellNode;
 
           if (!cell) return <div className="h-6 w-8" />;
+          const cellKey = `cell-${cell.row_num}-${cell.col_num}`;
 
           const seat = cell.cell_type;
           const isMatch = selectedType ? seat?.startsWith(selectedType) : true;
           const label = spaceTypeLabelMap[cell.cell_type] || cell.cell_type;
+
           return (
-            <Popover>
+            <Popover
+              open={openPopoverId === cellKey}
+              onOpenChange={(open) => setOpenPopoverId(open ? cellKey : null)}
+            >
               <PopoverTrigger asChild>
                 <div
                   className={`hover:ring-primary/20 flex h-6 w-8 cursor-default cursor-pointer items-center justify-center rounded-sm border p-1 text-[9px] font-semibold transition-all hover:ring-2 ${isMatch ? getCellStyle(cell) : "opacity-20 grayscale"} `}
                 >
-                  {seat?.split("_").pop()?.slice(0, 3)}
+                  {/* {seat?.split("_").pop()?.slice(0, 3)} */}
+                  {cell.cell_type?.split("_").pop()?.slice(0, 3)}
                 </div>
               </PopoverTrigger>
 
@@ -189,9 +196,8 @@ export function FloorTableV2({
                     <button
                       className="w-full rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
                       onClick={() => {
-                        console.log("Booking cell:", cell);
-                        // call booking API
                         onBook(cell);
+                        setOpenPopoverId(null);
                       }}
                     >
                       Book
@@ -222,7 +228,7 @@ export function FloorTableV2({
           );
         },
       })),
-    [floorData?.max_cols, selectedType],
+    [floorData?.max_cols, selectedType, openPopoverId],
   );
 
   const table = useReactTable({

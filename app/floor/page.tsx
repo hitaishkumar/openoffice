@@ -65,7 +65,7 @@ const Page = () => {
             <Plus /> New Booking
           </Button>
           {isBookingOpen && (
-            <div className="fixed inset-0 z-[1] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[10] flex items-center justify-center bg-black/60 backdrop-blur-sm">
               <div className="mx-4 w-full max-w-md overflow-hidden rounded-lg bg-white shadow-2xl">
                 {/* Modal Header */}
                 <div className="flex flex-row items-center justify-between border-b px-6 py-4">
