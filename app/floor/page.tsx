@@ -25,7 +25,9 @@ import { useState } from "react";
 
 const Page = () => {
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [showBookingModal, setShowBookingModal] = useState(false);
+
+  const [bookingData, setBookingData] = useState<any>(null);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   const today = new Date();
   const minDate = today.toISOString().split("T")[0];
@@ -37,8 +39,8 @@ const Page = () => {
   const [selectedDate, setSelectedDate] = useState<string>(minDate);
 
   const handleBooking = () => {
-    console.log("Booking button clicked");
-    setShowBookingModal(true);
+    setBookingData(null); // no prefill
+    setIsBookingOpen(true);
   };
 
   return (
@@ -62,14 +64,14 @@ const Page = () => {
           <Button onClick={handleBooking} className="h-12">
             <Plus /> New Booking
           </Button>
-          {showBookingModal && (
+          {isBookingOpen && (
             <div className="fixed inset-0 z-[1] flex items-center justify-center bg-black/60 backdrop-blur-sm">
               <div className="mx-4 w-full max-w-md overflow-hidden rounded-lg bg-white shadow-2xl">
                 {/* Modal Header */}
                 <div className="flex flex-row items-center justify-between border-b px-6 py-4">
                   <h2 className="text-xl font-bold">New Booking</h2>
                   <CircleX
-                    onClick={() => setShowBookingModal(false)}
+                    onClick={() => setIsBookingOpen(false)}
                     className="cursor-pointer text-gray-500 transition-colors hover:text-gray-700"
                     size={24}
                   />
@@ -99,9 +101,27 @@ const Page = () => {
                     />
                   </div>
 
+                  {bookingData && (
+                    <div className="rounded-md bg-gray-50 p-2 text-xs">
+                      <div>
+                        <strong>Selected Seat:</strong>
+                      </div>
+                      <div>
+                        Row: {bookingData.row_num} | Col: {bookingData.col_num}
+                      </div>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Seat Type</Label>
-                    <select className="border-input focus:ring-primary w-full rounded-md border px-3 py-2 text-sm font-medium focus:ring-2 focus:outline-none">
+                    <select
+                      value={
+                        bookingData?.cell_type
+                          ? bookingData.cell_type.toLowerCase()
+                          : ""
+                      }
+                      className="border-input focus:ring-primary w-full rounded-md border px-3 py-2 text-sm font-medium focus:ring-2 focus:outline-none"
+                      disabled={!!bookingData}
+                    >
                       <option value="workstation">Workstation</option>
                       <option value="hot-desk">Hot Desk</option>
                       <option value="meeting-room-4">Meeting Room(4)</option>
@@ -110,10 +130,12 @@ const Page = () => {
                       <option value="phone-booth">Phone Booth</option>
                     </select>
                   </div>
-                  <em className="text-muted-foreground text-xs">
-                    *This will allot a booking randomly based on availability.
-                    For specific seat selection, route to Quick Book.
-                  </em>
+                  {!bookingData && (
+                    <em className="text-muted-foreground text-xs">
+                      *This will allot a booking randomly based on availability.
+                      For specific seat selection, route to Quick Book.
+                    </em>
+                  )}
                 </div>
 
                 {/* Modal Footer */}
@@ -121,7 +143,7 @@ const Page = () => {
                   <Button
                     variant="outline"
                     className="flex-1"
-                    onClick={() => setShowBookingModal(false)}
+                    onClick={() => setIsBookingOpen(false)}
                   >
                     Cancel
                   </Button>
@@ -144,7 +166,7 @@ const Page = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Date</Label>
-                <Input value="07 Apr 2026" readOnly />
+                <Input value={selectedDate} readOnly />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
@@ -197,6 +219,10 @@ const Page = () => {
           <FloorTableV2
             selectedType={selectedType}
             floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7"
+            onBook={(cell) => {
+              setBookingData(cell);
+              setIsBookingOpen(true);
+            }}
           />
         </div>
       </div>

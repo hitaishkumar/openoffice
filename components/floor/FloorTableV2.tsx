@@ -33,6 +33,28 @@ type FloorPlanResponse = {
 
 type RowType = Record<string, FloorCellNode | null>;
 
+const BOOKABLE_TYPES = new Set([
+  "WORKSTATION",
+  "HOT_DESK",
+  "MR4",
+  "MR6",
+  "COLAB",
+  "PHONE_BOOTH",
+]);
+
+const isBookableType = (type: string) => {
+  if (!type) return false;
+
+  return (
+    type.includes("WORKSTATION") ||
+    type.includes("HOT_DESK") ||
+    type === "MR4" ||
+    type === "MR6" ||
+    type.includes("COLAB") ||
+    type.includes("PHONE_BOOTH")
+  );
+};
+
 // Refined color palette for a cleaner look
 const getCellStyle = (floorCellNode: FloorCellNode): string => {
   if (!floorCellNode.cell_type) return "bg-transparent";
@@ -55,16 +77,17 @@ const getCellStyle = (floorCellNode: FloorCellNode): string => {
   // Workstation defaults
   if (floorCellNode.cell_type.includes("WORKSTATION"))
     return "bg-white text-slate-900 border-slate-200 shadow-sm";
-
   return "bg-muted/30 text-muted-foreground border-transparent";
 };
 
 export function FloorTableV2({
   floorId,
   selectedType,
+  onBook,
 }: {
   floorId: string;
   selectedType: string | null;
+  onBook: (cell: FloorCellNode) => void;
 }) {
   const [floorData, setFloorData] = useState<FloorPlanResponse>({
     matrix: [],
@@ -160,6 +183,21 @@ export function FloorTableV2({
                   <span className="font-medium">Bookable:</span>{" "}
                   {cell.is_bookable ? "Yes" : "No"}
                 </div>
+
+                {cell.is_bookable && isBookableType(cell.cell_type) && (
+                  <div className="pt-2">
+                    <button
+                      className="w-full rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                      onClick={() => {
+                        console.log("Booking cell:", cell);
+                        // call booking API
+                        onBook(cell);
+                      }}
+                    >
+                      Book
+                    </button>
+                  </div>
+                )}
                 {cell.floor_cell_id && (
                   <div className="truncate">
                     <span className="font-medium">ID:</span>{" "}

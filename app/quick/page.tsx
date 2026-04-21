@@ -25,6 +25,9 @@ import { Input } from "@/components/ui/input";
 const BookingPage = () => {
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
+  const [bookingData, setBookingData] = useState<any>(null);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+
   const today = new Date();
   const minDate = today.toISOString().split("T")[0];
 
@@ -67,6 +70,10 @@ const BookingPage = () => {
           <FloorTableV2
             selectedType={selectedType}
             floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7"
+            onBook={(cell) => {
+              setBookingData(cell);
+              setIsBookingOpen(true);
+            }}
           />
         </div>
       </div>
