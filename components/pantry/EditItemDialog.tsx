@@ -28,14 +28,22 @@ import {
 
 import { listPantries } from "@/app/mutations/pantry/list/list_pantries";
 import { Controller, useForm } from "react-hook-form";
-import { CreateItemResponse, FormValues } from "./types";
+import { InventoryItem, UpdateFormValues, UpdateItemResponse } from "./types";
 
-export function AddPantryDialog() {
-  const { register, handleSubmit, control, watch } = useForm<FormValues>({});
-  const onSubmit = async (formData: FormValues) => {
+type Props = {
+  inventoryItem: InventoryItem;
+};
+
+export function EditItemDialog({ inventoryItem }: Props) {
+  const { register, handleSubmit, control, watch } = useForm<UpdateFormValues>({
+    defaultValues: {
+      is_perishable: inventoryItem.is_perishable,
+    },
+  });
+  const onSubmit = async (formData: UpdateFormValues) => {
     try {
       console.log("formData", formData);
-      const data = await callapi<CreateItemResponse>("/api/pantry/item", {
+      const data = await callapi<UpdateItemResponse>("/api/pantry/item", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -64,11 +72,13 @@ export function AddPantryDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Add Item</Button>
+        <Button size="sm" variant="outline">
+          Edit
+        </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-2/4 rounded-sm bg-gray-50 ">
+      <DialogContent className="min-w-xl rounded-sm bg-red-50/80">
         <DialogHeader>
-          <DialogTitle>Add New Pantry Item</DialogTitle>
+          <DialogTitle>Edit Pantry Item</DialogTitle>
         </DialogHeader>
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -77,7 +87,10 @@ export function AddPantryDialog() {
           {/* Name */}
           <div className="space-y-2">
             <Label>Name</Label>
-            <Input placeholder="Mariegold Biscuits" {...register("name")} />
+            <Input
+              {...register("name")}
+              defaultValue={inventoryItem.item_name}
+            />
           </div>
 
           {/* Unit */}
@@ -87,12 +100,14 @@ export function AddPantryDialog() {
               control={control}
               name="unit"
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  defaultValue={inventoryItem.unit}
+                  disabled
+                >
                   <SelectTrigger className="w-full">
-                    <SelectValue
-                      placeholder="Select unit"
-                      defaultValue={"pcs"}
-                    />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper">
                     <SelectItem value="pcs">Piece</SelectItem>
@@ -100,6 +115,7 @@ export function AddPantryDialog() {
                     <SelectItem value="l">Litre</SelectItem>
                     <SelectItem value="gm">gm</SelectItem>
                     <SelectItem value="kg">Kg</SelectItem>
+                    <SelectItem value="pack">Pack</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -115,9 +131,13 @@ export function AddPantryDialog() {
                 control={control}
                 name="category_id"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    defaultValue={inventoryItem.category_id}
+                  >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Category eg: Snacks" />
+                      <SelectValue />
                     </SelectTrigger>
 
                     <SelectContent position="popper">
@@ -147,9 +167,13 @@ export function AddPantryDialog() {
                 control={control}
                 name="pantry_id"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    defaultValue={inventoryItem.pantry_id}
+                  >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Pantry eg: Snacks" />
+                      <SelectValue />
                     </SelectTrigger>
 
                     <SelectContent position="popper">
@@ -179,8 +203,9 @@ export function AddPantryDialog() {
           <div className="space-y-2">
             <Label>Stock</Label>
             <Input
+              disabled
               type="number"
-              placeholder="120 piece"
+              defaultValue={inventoryItem.current_quantity}
               {...register("initial_stock", { valueAsNumber: true })}
             />
           </div>
@@ -189,10 +214,9 @@ export function AddPantryDialog() {
           <div className="space-y-2">
             <Label>Unit Cost</Label>
             <Input
-              placeholder="₹ 120"
-              type="number"
-              step="0.01"
-              {...register("unit_cost", { valueAsNumber: true })}
+              defaultValue={"₹" + inventoryItem.price_per_unit}
+              type="text"
+              disabled
             />
           </div>
 
@@ -200,7 +224,7 @@ export function AddPantryDialog() {
           <div className="space-y-2">
             <Label>Min Threshold</Label>
             <Input
-              placeholder="20 piece"
+              defaultValue={inventoryItem.min_threshold}
               type="number"
               {...register("default_min_threshold", { valueAsNumber: true })}
             />
@@ -210,7 +234,7 @@ export function AddPantryDialog() {
           <div className="space-y-2">
             <Label>Max Capacity</Label>
             <Input
-              placeholder="50 piece"
+              defaultValue={inventoryItem.max_capacity}
               type="number"
               {...register("default_max_capacity", { valueAsNumber: true })}
             />
@@ -256,17 +280,19 @@ export function AddPantryDialog() {
             <Input
               type="number"
               placeholder="Days"
+              defaultValue={inventoryItem.shelf_life_days ?? 0}
               disabled={!watch("is_perishable")}
               {...register("shelf_life_days", { valueAsNumber: true })}
-              className="w-1/2"
+              className="w-20"
             />
           </div>
+
+          <DialogFooter>
+            <Button type="submit">
+              <PlusCircle /> Update
+            </Button>
+          </DialogFooter>
         </form>
-        <DialogFooter>
-          <Button size={"lg"}>
-            <PlusCircle /> Add
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

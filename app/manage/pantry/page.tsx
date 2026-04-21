@@ -37,7 +37,6 @@ const page = () => {
       <div className="grid grid-cols-4 h-fit min-w-full">
         {/* LEFT PANE */}
         <div className="col-span-1 overflow-y-scroll border-r">
-          {/* DATE & TIME */}
           <Card className="rounded-none h-2/7">
             <CardHeader>
               <CardTitle>Consumtion by Category</CardTitle>
@@ -45,13 +44,16 @@ const page = () => {
             </CardHeader>
 
             <CardContent className="space-y-4">
-              <div className="space-y-2 ">
+              <div className="space-y-2">
                 {[10, 20, 30, 40, 50, 60, 70].map((percent) => {
                   return (
-                    <div className="grid grid-cols-12 items-center gap-2 ">
+                    <div
+                      className="grid grid-cols-12 items-center gap-2"
+                      key={percent}
+                    >
                       {/* Category */}
                       <div className="col-span-3 text-xs text-muted-foreground">
-                        {percent + "catrogys"}
+                        {percent + " categories"}
                       </div>
 
                       {/* Progress bar */}
@@ -124,12 +126,16 @@ const page = () => {
         </div>
 
         {/* RGIHT PANEL */}
-        <div className="col-span-3 flex flex-col space-y-6 overflow-scroll p-4">
+        <div className="col-span-3 flex flex-col space-y-6 overflow-scroll">
           {/* <FloorPlan /> */}
           {/* <FloorTable floorId="019d6e02-0c66-73e7-9317-0cce79e88eb7" /> */}
           {/* SPACE LIST */}
-          <UsageSummary />
-          <InventoryTable />
+          <div className="border-b p-4">
+            <UsageSummary />
+          </div>
+          <div className="p-4">
+            <InventoryTable />
+          </div>
 
           {/* <FloorCanvas /> */}
         </div>
