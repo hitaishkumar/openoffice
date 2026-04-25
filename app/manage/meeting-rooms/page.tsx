@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Calendar } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type MeetingRoom = {
   id: string;
@@ -31,91 +31,104 @@ type MeetingRoom = {
   bookingTime: string;
 };
 
-const page = () => {
-  const initialRooms: MeetingRoom[] = [
-    {
-      id: "CR-A1",
-      name: "Conference Room A",
-      floor: "2nd Floor",
-      capacity: 12,
-      status: "available" as const,
-      facilities: ["Projector", "Whiteboard", "AC"],
-      nextBooking: null,
-      bookingTime: "—",
-    },
-    {
-      id: "CR-B1",
-      name: "Conference Room B",
-      floor: "2nd Floor",
-      capacity: 8,
-      status: "booked" as const,
-      facilities: ["Projector", "Video Conference", "AC"],
-      nextBooking: "Team Standup",
-      bookingTime: "10:00 AM - 11:00 AM",
-    },
-    {
-      id: "CR-C1",
-      name: "Executive Board Room",
-      floor: "3rd Floor",
-      capacity: 20,
-      status: "available" as const,
-      facilities: [
-        "Projector",
-        "Video Conference",
-        "Whiteboard",
-        "AC",
-        "Sound System",
-      ],
-      nextBooking: null,
-      bookingTime: "—",
-    },
-    {
-      id: "WS-D1",
-      name: "Workshop Room D",
-      floor: "Ground Floor",
-      capacity: 15,
-      status: "maintenance" as const,
-      facilities: ["Whiteboard", "Tables", "Chairs"],
-      nextBooking: "Maintenance",
-      bookingTime: "09:00 AM - 05:00 PM",
-    },
-    {
-      id: "CR-E1",
-      name: "Brainstorm Room",
-      floor: "2nd Floor",
-      capacity: 6,
-      status: "booked" as const,
-      facilities: ["Whiteboard", "AC", "Projector"],
-      nextBooking: "Design Review",
-      bookingTime: "02:00 PM - 03:30 PM",
-    },
-    {
-      id: "CR-F1",
-      name: "Focus Room F",
-      floor: "3rd Floor",
-      capacity: 4,
-      status: "available" as const,
-      facilities: ["AC", "Whiteboard", "Phone"],
-      nextBooking: null,
-      bookingTime: "—",
-    },
-  ];
+type RoomStats = {
+  total: number;
+  available: number;
+  booked: number;
+  maintenance: number;
+};
 
-  const [rooms, setRooms] = useState<MeetingRoom[]>(initialRooms);
+type Floor = {
+  floor_id: string;
+  name: string;
+  building?: string;
+  created_at?: string;
+};
+
+const Page = () => {
+  const [rooms, setRooms] = useState<MeetingRoom[]>([]);
+  const [stats, setStats] = useState<RoomStats>({
+    total: 0,
+    available: 0,
+    booked: 0,
+    maintenance: 0,
+  });
+  const [floors, setFloors] = useState<Floor[]>([]);
   const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAddRoom = (newRoom: MeetingRoom) => {
-    setRooms([...rooms, newRoom]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const [roomsRes, statsRes, floorsRes] = await Promise.all([
+          fetch("/api/meeting-rooms"),
+          fetch("/api/meeting-rooms/stats"),
+          fetch("/api/floors"),
+        ]);
+
+        if (!roomsRes.ok) throw new Error("Failed to fetch rooms");
+        if (!statsRes.ok) throw new Error("Failed to fetch stats");
+        if (!floorsRes.ok) throw new Error("Failed to fetch floors");
+
+        const roomsData = await roomsRes.json();
+        const statsData = await statsRes.json();
+        const floorsData = await floorsRes.json();
+
+        setRooms(roomsData.data || []);
+        setStats(statsData.data || {});
+        setFloors(floorsData.data || []);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load meeting rooms");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleAddRoom = async (newRoom: MeetingRoom) => {
+    try {
+      setRooms((prev) => [...prev, newRoom]);
+
+      const statsRes = await fetch("/api/meeting-rooms/stats");
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData.data || {});
+      }
+    } catch (err) {
+      console.error("Error updating room list:", err);
+    }
   };
 
   const filteredRooms = selectedFloor
     ? rooms.filter((room) => room.floor === selectedFloor)
     : rooms;
 
+  if (loading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="text-muted-foreground">Loading meeting rooms...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full">
-      {/* NAVBAR */}
       <div className="border-b w-full h-15">
         <div className="flex gap-4 items-center justify-end pr-4 h-full">
           <Button
@@ -129,7 +142,6 @@ const page = () => {
         </div>
       </div>
 
-      {/* CALENDAR MODAL */}
       <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
@@ -163,13 +175,13 @@ const page = () => {
                     Available
                   </div>
                   <div className="col-span-6 text-right text-xs font-bold text-green-600">
-                    3 rooms
+                    {stats.available} rooms
                   </div>
                 </div>
                 <div className="grid grid-cols-12 items-center gap-2">
                   <div className="col-span-6 text-xs font-medium">Booked</div>
                   <div className="col-span-6 text-right text-xs font-bold text-blue-600">
-                    2 rooms
+                    {stats.booked} rooms
                   </div>
                 </div>
                 <div className="grid grid-cols-12 items-center gap-2">
@@ -177,7 +189,7 @@ const page = () => {
                     Maintenance
                   </div>
                   <div className="col-span-6 text-right text-xs font-bold text-orange-600">
-                    1 room
+                    {stats.maintenance} rooms
                   </div>
                 </div>
               </div>
@@ -228,14 +240,14 @@ const page = () => {
               >
                 All Floors
               </Button>
-              {["Ground Floor", "2nd Floor", "3rd Floor"].map((floor) => (
+              {floors.map((floor) => (
                 <Button
-                  key={floor}
-                  variant={selectedFloor === floor ? "default" : "ghost"}
+                  key={floor.floor_id}
+                  variant={selectedFloor === floor.name ? "default" : "ghost"}
                   className="w-full justify-start text-xs"
-                  onClick={() => setSelectedFloor(floor)}
+                  onClick={() => setSelectedFloor(floor.name)}
                 >
-                  {floor}
+                  {floor.name}
                 </Button>
               ))}
             </CardContent>
@@ -247,14 +259,10 @@ const page = () => {
           <div className="p-6 space-y-6">
             {/* SUMMARY CARDS */}
             <RoomSummary
-              totalRooms={rooms.length}
-              availableRooms={
-                rooms.filter((r) => r.status === "available").length
-              }
-              bookedRooms={rooms.filter((r) => r.status === "booked").length}
-              maintenanceRooms={
-                rooms.filter((r) => r.status === "maintenance").length
-              }
+              totalRooms={stats.total}
+              availableRooms={stats.available}
+              bookedRooms={stats.booked}
+              maintenanceRooms={stats.maintenance}
             />
 
             {/* ROOMS TABLE */}
@@ -274,4 +282,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
