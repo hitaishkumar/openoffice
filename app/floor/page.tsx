@@ -24,6 +24,8 @@ import { CircleX, Plus } from "lucide-react";
 import { useState } from "react";
 
 const Page = () => {
+  const [floorData, setFloorData] = useState<any>(null); // To store the matrix
+  const [selectedSeatType, setSelectedSeatType] = useState("workstation"); //Default selection to be workstation
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
   const [bookingData, setBookingData] = useState<any>(null);
@@ -38,9 +40,86 @@ const Page = () => {
 
   const [selectedDate, setSelectedDate] = useState<string>(minDate);
 
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+
+  const getSelectValue = (cellType: string) => {
+    if (!cellType) return "workstation";
+    const upperType = cellType.toUpperCase();
+
+    // Map the specific DB string to the dropdown value
+    if (upperType === "WORKSTATION_HAT") return "hot-desk";
+    if (upperType === "WORKSTATION_STD") return "workstation";
+
+    if (upperType.includes("MR4")) return "meeting-room-4";
+    if (upperType.includes("MR6")) return "meeting-room-6";
+    if (upperType.includes("COLAB")) return "collab-area";
+    if (upperType.includes("PHONE")) return "phone-booth";
+
+    return "workstation";
+  };
+
   const handleBooking = () => {
     setBookingData(null); // no prefill
     setIsBookingOpen(true);
+  };
+
+  const confirmBooking = () => {
+    let finalCell = bookingData;
+
+    // RANDOM ALLOCATION LOGIC
+    if (!finalCell) {
+      if (!floorData || !floorData.matrix) {
+        alert("Floor data not loaded yet.");
+        return;
+      }
+
+      const allCells = floorData.matrix.flat();
+
+      const availableCells = allCells.filter((cell: any) => {
+        if (!cell || !cell.is_bookable || !cell.cell_type) return false;
+
+        const cellTypeUpper = cell.cell_type.toUpperCase();
+
+        // Explicit mapping for the random search
+        if (selectedSeatType === "hot-desk") {
+          return cellTypeUpper === "WORKSTATION_HAT";
+        }
+        if (selectedSeatType === "workstation") {
+          return cellTypeUpper === "WORKSTATION_STD";
+        }
+
+        // Standard mapping for other types
+        const searchType = selectedSeatType.toUpperCase().replace("-", "_");
+        return cellTypeUpper.includes(searchType);
+      });
+
+      if (availableCells.length === 0) {
+        alert(`No available seats found for ${selectedSeatType}.`);
+        return;
+      }
+
+      const randomIndex = Math.floor(Math.random() * availableCells.length);
+      finalCell = availableCells[randomIndex];
+    }
+
+    // FINAL ACTION (Console Log / API Call)
+    console.log("Booking Confirmed:", {
+      userName: fullName,
+      userEmail: email,
+      date: selectedDate,
+      seatId: finalCell.floor_cell_id,
+      column: finalCell.col_num,
+      row: finalCell.row_num,
+      dbCellType: finalCell.cell_type,
+    });
+
+    // UI RESET
+    setIsBookingOpen(false);
+    setBookingData(null);
+    setFullName("");
+    setEmail("");
+    setSelectedSeatType("workstation");
   };
 
   return (
@@ -81,12 +160,21 @@ const Page = () => {
                 <div className="space-y-5 p-6">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Full Name</Label>
-                    <Input placeholder="Enter your name" />
+                    <Input
+                      placeholder="Enter your name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Email ID</Label>
-                    <Input type="email" placeholder="Enter your email" />
+                    <Input
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -115,10 +203,11 @@ const Page = () => {
                     <Label className="text-sm font-medium">Seat Type</Label>
                     <select
                       value={
-                        bookingData?.cell_type
-                          ? bookingData.cell_type.toLowerCase()
-                          : ""
+                        bookingData
+                          ? getSelectValue(bookingData.cell_type)
+                          : selectedSeatType
                       }
+                      onChange={(e) => setSelectedSeatType(e.target.value)}
                       className="border-input focus:ring-primary w-full rounded-md border px-3 py-2 text-sm font-medium focus:ring-2 focus:outline-none"
                       disabled={!!bookingData}
                     >
@@ -130,6 +219,7 @@ const Page = () => {
                       <option value="phone-booth">Phone Booth</option>
                     </select>
                   </div>
+
                   {!bookingData && (
                     <em className="text-muted-foreground text-xs">
                       *This will allot a booking randomly based on availability.
@@ -147,7 +237,13 @@ const Page = () => {
                   >
                     Cancel
                   </Button>
-                  <Button className="flex-1">Confirm Booking</Button>
+                  <Button
+                    onClick={confirmBooking}
+                    disabled={!fullName || !email}
+                    className="flex-1"
+                  >
+                    Confirm Booking
+                  </Button>
                 </div>
               </div>
             </div>
@@ -223,6 +319,7 @@ const Page = () => {
               setBookingData(cell);
               setIsBookingOpen(true);
             }}
+            onDataLoad={setFloorData}
           />
         </div>
       </div>

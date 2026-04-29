@@ -77,6 +77,7 @@ const getCellStyle = (floorCellNode: FloorCellNode): string => {
   // Workstation defaults
   if (floorCellNode.cell_type.includes("WORKSTATION"))
     return "bg-white text-slate-900 border-slate-200 shadow-sm";
+
   return "bg-muted/30 text-muted-foreground border-transparent";
 };
 
@@ -84,10 +85,12 @@ export function FloorTableV2({
   floorId,
   selectedType,
   onBook,
+  onDataLoad,
 }: {
   floorId: string;
   selectedType: string | null;
   onBook: (cell: FloorCellNode) => void;
+  onDataLoad?: (data: FloorPlanResponse) => void;
 }) {
   const [floorData, setFloorData] = useState<FloorPlanResponse>({
     matrix: [],
@@ -112,6 +115,7 @@ export function FloorTableV2({
       .then((data: FloorPlanResponse) => {
         setFloorData(data);
         setLoading(false);
+        if (onDataLoad) onDataLoad(data);
       })
       .catch((err) => {
         console.error("Failed to fetch floor data", err);
